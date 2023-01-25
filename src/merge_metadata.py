@@ -13,6 +13,6 @@ except:
     exit()
 
 out_folder = len(sys.argv) > 2 and sys.argv[2]
-replace = False if out_folder else True
+replace = bool(out_folder)
 
 processFolder(path, 'edited', 75, replace, out_folder)
