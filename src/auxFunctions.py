@@ -26,10 +26,12 @@ def progressBar(iterable, prefix = '', suffix = '', decimals = 1, length = 100, 
 def searchMedia(path, title, editedWord):
     title = fixTitle(title)
 
+    (file_name, ext) = os.path.splitext(title)
+
     possible_titles = [
         title,
-        str(title.rsplit('.', 1)[0] + "-" + editedWord + "." + title.rsplit('.', 1)[1]),
-        str(title.rsplit('.', 1)[0] + "(1)." + title.rsplit('.', 1)[1]),
+        str(file_name + "-" + editedWord + "." + ext),
+        str(file_name + "(1)." + ext),
     ]
 
     for title in possible_titles:
@@ -47,7 +49,8 @@ def fixTitle(title):
 # Recursive function to search name if its repeated
 def checkIfSameName(title, titleFixed, matchedFiles, recursionTime):
     if titleFixed in matchedFiles:
-        titleFixed = title.rsplit('.', 1)[0] + "(" + str(recursionTime) + ")" + "." + title.rsplit('.', 1)[1]
+        (file_name, ext) = os.path.splitext(titleFixed)
+        titleFixed = file_name + "(" + str(recursionTime) + ")" + "." + ext
         return checkIfSameName(title, titleFixed, matchedFiles, recursionTime + 1)
     else:
         return titleFixed
