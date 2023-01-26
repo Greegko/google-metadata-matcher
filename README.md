@@ -35,7 +35,8 @@ optional arguments:
 ## Main Dependencies
 
 - Pillow - Image Editor lib
-- piexif
+- pillow-heif - Image Editor lib HEIC (Apple) support
+- piexif - Adjust Metadata for image
 
 ## Tutorial
 
