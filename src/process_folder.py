@@ -3,68 +3,83 @@ from auxFunctions import *
 import json
 from PIL import Image
 
-def processFolder(rootFolder, editedWord, optimize, replace_original, outFolder):
-    piexifCodecs = [k.casefold() for k in ['TIF', 'TIFF', 'JPEG', 'JPG']]
+piexifCodecs = [k.casefold() for k in ['TIF', 'TIFF', 'JPEG', 'JPG']]
 
-    matchedFiles = []  # array with names of all the media already matched
+def get_images_from_folder(folder: str, edited_word: str):
+    files = []
+    folder_entries = list(os.scandir(folder))
+
+    for entry in folder_entries:
+        if entry.is_dir():
+            files = files + get_images_from_folder(entry.path, edited_word)
+            continue
+
+        if entry.is_file():
+            (file_name, ext) = os.path.splitext(entry.name)
+
+            if ext == ".json":
+                file = searchMedia(folder, file_name, edited_word)
+                files.append((entry.path, file))
+
+    return files
+
+def get_output_filename(root_folder, out_folder, image_path):
+    image_name = os.path.basename(image_path)
+    new_image_name = image_name + ".jpg"
+    image_path_dir = os.path.dirname(image_path)
+    relative_to_new_image_folder = os.path.relpath(image_path_dir, root_folder)
+    return os.path.join(out_folder, relative_to_new_image_folder, new_image_name)
+
+def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder: str):
     errorCounter = 0
     successCounter = 0
 
-    files = list(os.scandir(rootFolder))  #Convert iterator into a list to sort it
-    files.sort(key=lambda s: len(s.name)) #Sort by length to avoid name(1).jpg be processed before name.jpg
+    images = get_images_from_folder(root_folder, edited_word)
 
-    if not replace_original and not os.path.exists(outFolder):
-        os.mkdir(outFolder)
+    for entry in images:
+        metadata_path = entry[0]
+        image_path = entry[1]
 
-    for file in files:
-        if file.is_file() and file.name.endswith(".json"):  # Check if file is a JSON
-            with open(file, encoding="utf8") as f:  # Load JSON into a var
-                data = json.load(f)
+        if not image_path:
+            print("Image for metadata: "+ metadata_path + " not found")
+            errorCounter += 1
+            continue
 
-            titleOriginal = data['title']  # Store metadata into vars
+        with open(metadata_path, encoding="utf8") as f: 
+            data = json.load(f)
 
-            try:
-                filepath = searchMedia(rootFolder, titleOriginal, matchedFiles, editedWord)
-            except Exception as e:
-                print(titleOriginal + " not found")
-                errorCounter += 1
-                continue
+        timeStamp = int(data['photoTakenTime']['timestamp'])
 
-            timeStamp = int(data['photoTakenTime']['timestamp'])  # Get creation time
-            print('File:', filepath)
+        print('Metadata:', metadata_path)
 
-            if titleOriginal.rsplit('.', 1)[1].casefold() in piexifCodecs:  # If EXIF is supported
-                try:
-                    im = Image.open(filepath, mode="r")
-                    os.replace(filepath, filepath.rsplit('.', 1)[0] + ".jpg")
-                    filepath = filepath.rsplit('.', 1)[0] + ".jpg"
+        (_, ext) = os.path.splitext(image_path)
 
-                    if replace_original:
-                        im.save(filepath, quality=optimize)
-                        os.remove(file.path)
-                        setFileCreationTime(filepath, timeStamp)
-                    else:
-                        newFilePath = os.path.join(outFolder, titleOriginal)
-                        im.save(newFilePath, quality=optimize)
-                        setFileCreationTime(newFilePath, timeStamp)
+        if not ext[1:].casefold() in piexifCodecs:
+            print('Photo format is not supported:', image_path)
+            errorCounter += 1
+            continue
+        
+        im = Image.open(image_path, mode="r")
 
-                except ValueError as e:
-                    print("Error converting to JPG in " + titleOriginal)
-                    print(e)
-                    errorCounter += 1
-                    continue
+        new_image_path = get_output_filename(root_folder, out_folder, image_path)
 
-                try:
-                    set_EXIF(filepath, data['geoData']['latitude'], data['geoData']['longitude'], data['geoData']['altitude'], timeStamp)
+        dir = os.path.dirname(new_image_path)
 
-                except Exception as e:  # Error handler
-                    print("Inexistent EXIF data for " + filepath)
-                    print(e)
-                    errorCounter += 1
-                    continue
+        if not os.path.exists(dir):
+            os.makedirs(dir)
 
-            matchedFiles.append(titleOriginal)
-            successCounter += 1
+        im.save(new_image_path, quality=optimize)
+        setFileCreationTime(new_image_path, timeStamp)
+
+        try:
+            set_EXIF(image_path, data['geoData']['latitude'], data['geoData']['longitude'], data['geoData']['altitude'], timeStamp)
+        except Exception as e: 
+            print("Inexistent EXIF data for " + image_path)
+            print(e)
+            errorCounter += 1
+            continue
+
+        successCounter += 1
 
     print('Process finished')
     print('Success', successCounter)

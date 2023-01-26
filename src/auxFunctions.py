@@ -5,14 +5,13 @@ import piexif
 from fractions import Fraction
 
 # Function to search media associated to the JSON
-def searchMedia(path, title, matchedFiles, editedWord):
+def searchMedia(path, title, editedWord):
     title = fixTitle(title)
 
     possible_titles = [
         title,
         str(title.rsplit('.', 1)[0] + "-" + editedWord + "." + title.rsplit('.', 1)[1]),
         str(title.rsplit('.', 1)[0] + "(1)." + title.rsplit('.', 1)[1]),
-        checkIfSameName(title, title, matchedFiles, 1), 
     ]
 
     for title in possible_titles:
