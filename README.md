@@ -16,8 +16,11 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -w EDITED_WORD, --edited_word EDITED_WORD
+                        Google Photos 'edited' word translation
   -o OPTIMIZE, --optimize OPTIMIZE
+                        Optimalize the images (0 to 100), recommended: 75 (default: disabled)
   -m MAX_DIMENSION, --max_dimension MAX_DIMENSION
+                        Resize the image restricting the max width,height dimension
 ```
 
 ## Features

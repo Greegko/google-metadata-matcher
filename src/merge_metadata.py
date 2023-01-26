@@ -1,5 +1,4 @@
 import os
-import sys
 from process_folder import processFolder
 import argparse
 
@@ -14,9 +13,9 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('source_folder')
 parser.add_argument('output_folder')
-parser.add_argument('-w',  '--edited_word', default='edited')
-parser.add_argument('-o',  '--optimize', type=int, default=100)
-parser.add_argument('-m',  '--max_dimension', type=dimension)
+parser.add_argument('-w',  '--edited_word', default='edited', help="Google Photos 'edited' word translation")
+parser.add_argument('-o',  '--optimize', type=int, default=100, help='Optimalize the images (0 to 100), recommended: 75 (default: disabled)')
+parser.add_argument('-m',  '--max_dimension', type=dimension, help="Resize the image restricting the max width,height dimension")
 
 args = parser.parse_args()
 
