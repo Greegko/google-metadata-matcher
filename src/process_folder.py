@@ -6,7 +6,7 @@ from pillow_heif import register_heif_opener
 
 register_heif_opener()
 
-piexifCodecs = [k.casefold() for k in ['TIF', 'TIFF', 'JPEG', 'JPG', 'HEIC']]
+piexifCodecs = [k.casefold() for k in ['TIF', 'TIFF', 'JPEG', 'JPG', 'HEIC', 'PNG']]
 
 def get_images_from_folder(folder: str, edited_word: str):
     files: list[tuple[str, str]] = []
@@ -46,7 +46,7 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
         image_path = entry[1]
 
         if not image_path:
-            print("Image for metadata: "+ metadata_path + " not found")
+            print("Missing image for:", metadata_path)
             errorCounter += 1
             continue
 
@@ -62,7 +62,7 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
             errorCounter += 1
             continue
         
-        im = Image.open(image_path, mode="r")
+        im = Image.open(image_path, mode="r").convert('RGB')
 
         new_image_path = get_output_filename(root_folder, out_folder, image_path)
 
@@ -75,7 +75,7 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
         setFileCreationTime(new_image_path, timeStamp)
 
         try:
-            set_EXIF(image_path, data['geoData']['latitude'], data['geoData']['longitude'], data['geoData']['altitude'], timeStamp)
+            set_EXIF(new_image_path, data['geoData']['latitude'], data['geoData']['longitude'], data['geoData']['altitude'], timeStamp)
         except Exception as e: 
             print("Inexistent EXIF data for " + image_path)
             print(e)
