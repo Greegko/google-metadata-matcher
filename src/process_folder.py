@@ -17,7 +17,7 @@ def get_images_from_folder(folder: str, edited_word: str):
         if entry.is_file():
             (file_name, ext) = os.path.splitext(entry.name)
 
-            if ext == ".json":
+            if ext == ".json" and file_name != "metadata":
                 file = searchMedia(folder, file_name, edited_word)
                 files.append((entry.path, file))
 
@@ -36,7 +36,9 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
 
     images = get_images_from_folder(root_folder, edited_word)
 
-    for entry in images:
+    print("Total images found:", len(images))
+
+    for entry in progressBar(images):
         metadata_path = entry[0]
         image_path = entry[1]
 
@@ -49,8 +51,6 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
             data = json.load(f)
 
         timeStamp = int(data['photoTakenTime']['timestamp'])
-
-        print('Metadata:', metadata_path)
 
         (_, ext) = os.path.splitext(image_path)
 
@@ -81,7 +81,7 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
 
         successCounter += 1
 
-    print('Process finished')
+    print('Metadata merging has been finished')
     print('Success', successCounter)
     print('Failed', errorCounter)
 
