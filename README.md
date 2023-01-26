@@ -40,4 +40,4 @@ optional arguments:
 
 ## Tutorial
 
-- [Migrate Google Photos to iCloud](migrate_photos)
+- [Migrate Google Photos to iCloud](migrate_photos.md)

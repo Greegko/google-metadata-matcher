@@ -9,8 +9,8 @@
 
 3. Clone this repo and install dependencies
 
-       clone <TODO:gitsource> <target_dir>
-       cd <target_dir>
+       clone https://github.com/Greegko/google-metadata-matcher
+       cd google-metadata-matcher
        pip3 install -r requirements.txt
 
 4. Run the metadata merger on the images
