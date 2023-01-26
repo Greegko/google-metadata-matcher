@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('source_folder')
 parser.add_argument('output_folder')
 parser.add_argument('-w',  '--edited_word', default='edited')
-parser.add_argument('-o',  '--optimize', type=int, default=75)
+parser.add_argument('-o',  '--optimize', type=int, default=100)
 
 args = parser.parse_args()
 

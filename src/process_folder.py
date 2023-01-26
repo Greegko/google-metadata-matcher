@@ -6,7 +6,7 @@ from PIL import Image
 piexifCodecs = [k.casefold() for k in ['TIF', 'TIFF', 'JPEG', 'JPG']]
 
 def get_images_from_folder(folder: str, edited_word: str):
-    files = []
+    files: list[tuple[str, str]] = []
     folder_entries = list(os.scandir(folder))
 
     for entry in folder_entries:
