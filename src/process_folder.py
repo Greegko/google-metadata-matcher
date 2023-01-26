@@ -2,8 +2,11 @@ import os
 from auxFunctions import *
 import json
 from PIL import Image
+from pillow_heif import register_heif_opener
 
-piexifCodecs = [k.casefold() for k in ['TIF', 'TIFF', 'JPEG', 'JPG']]
+register_heif_opener()
+
+piexifCodecs = [k.casefold() for k in ['TIF', 'TIFF', 'JPEG', 'JPG', 'HEIC']]
 
 def get_images_from_folder(folder: str, edited_word: str):
     files: list[tuple[str, str]] = []
