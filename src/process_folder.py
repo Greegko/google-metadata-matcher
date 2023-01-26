@@ -33,7 +33,7 @@ def get_output_filename(root_folder, out_folder, image_path):
     relative_to_new_image_folder = os.path.relpath(image_path_dir, root_folder)
     return os.path.join(out_folder, relative_to_new_image_folder, new_image_name)
 
-def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder: str):
+def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder: str, max_dimension):
     errorCounter = 0
     successCounter = 0
 
@@ -63,6 +63,9 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
             continue
         
         im = Image.open(image_path, mode="r").convert('RGB')
+
+        if max_dimension:
+            im.thumbnail(max_dimension)
 
         new_image_path = get_output_filename(root_folder, out_folder, image_path)
 
