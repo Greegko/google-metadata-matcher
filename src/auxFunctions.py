@@ -87,42 +87,37 @@ def change_to_rational(number):
     f = Fraction(str(number))
     return (f.numerator, f.denominator)
 
+def set_geo_exif(exif_dict, lat, lng, altitude):
+    lat_deg = to_deg(lat, ["S", "N"])
+    lng_deg = to_deg(lng, ["W", "E"])
 
-def set_EXIF(filepath, lat, lng, altitude, timeStamp):
-    exif_dict = piexif.load(filepath)
+    exiv_lat = (change_to_rational(lat_deg[0]), change_to_rational(lat_deg[1]), change_to_rational(lat_deg[2]))
+    exiv_lng = (change_to_rational(lng_deg[0]), change_to_rational(lng_deg[1]), change_to_rational(lng_deg[2]))
 
+    gps_ifd = {
+        piexif.GPSIFD.GPSVersionID: (2, 0, 0, 0),
+        piexif.GPSIFD.GPSAltitudeRef: 1,
+        piexif.GPSIFD.GPSAltitude: change_to_rational(round(altitude, 2)),
+        piexif.GPSIFD.GPSLatitudeRef: lat_deg[3],
+        piexif.GPSIFD.GPSLatitude: exiv_lat,
+        piexif.GPSIFD.GPSLongitudeRef: lng_deg[3],
+        piexif.GPSIFD.GPSLongitude: exiv_lng,
+    }
+
+    exif_dict['GPS'] = gps_ifd
+
+def set_date_exif(exif_dict, timeStamp):
     dateTime = datetime.fromtimestamp(timeStamp).strftime("%Y:%m:%d %H:%M:%S")  # Create date object
     exif_dict['0th'][piexif.ImageIFD.DateTime] = dateTime
+    exif_dict["0th"][piexif.ImageIFD.Orientation] = 1
     exif_dict['Exif'][piexif.ExifIFD.DateTimeOriginal] = dateTime
     exif_dict['Exif'][piexif.ExifIFD.DateTimeDigitized] = dateTime
 
+def set_exif(filepath, lat, lng, altitude, timeStamp):
+    exif_dict = piexif.load(filepath)
+
+    set_date_exif(exif_dict, timeStamp)
+    set_geo_exif(exif_dict, lat, lng, altitude)
+
     exif_bytes = piexif.dump(exif_dict)
     piexif.insert(exif_bytes, filepath)
-
-
-    try:
-        exif_dict = piexif.load(filepath)
-        lat_deg = to_deg(lat, ["S", "N"])
-        lng_deg = to_deg(lng, ["W", "E"])
-
-        exiv_lat = (change_to_rational(lat_deg[0]), change_to_rational(lat_deg[1]), change_to_rational(lat_deg[2]))
-        exiv_lng = (change_to_rational(lng_deg[0]), change_to_rational(lng_deg[1]), change_to_rational(lng_deg[2]))
-
-        gps_ifd = {
-            piexif.GPSIFD.GPSVersionID: (2, 0, 0, 0),
-            piexif.GPSIFD.GPSAltitudeRef: 1,
-            piexif.GPSIFD.GPSAltitude: change_to_rational(round(altitude, 2)),
-            piexif.GPSIFD.GPSLatitudeRef: lat_deg[3],
-            piexif.GPSIFD.GPSLatitude: exiv_lat,
-            piexif.GPSIFD.GPSLongitudeRef: lng_deg[3],
-            piexif.GPSIFD.GPSLongitude: exiv_lng,
-        }
-
-        exif_dict['GPS'] = gps_ifd
-
-        exif_bytes = piexif.dump(exif_dict)
-        piexif.insert(exif_bytes, filepath)
-
-    except Exception as e:
-        print("Coordinates not settled")
-        pass

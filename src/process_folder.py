@@ -78,7 +78,7 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
         setFileCreationTime(new_image_path, timeStamp)
 
         try:
-            set_EXIF(new_image_path, data['geoData']['latitude'], data['geoData']['longitude'], data['geoData']['altitude'], timeStamp)
+            set_exif(new_image_path, data['geoData']['latitude'], data['geoData']['longitude'], data['geoData']['altitude'], timeStamp)
         except Exception as e: 
             print("Inexistent EXIF data for " + image_path)
             print(e)
