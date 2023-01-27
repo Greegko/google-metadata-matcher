@@ -6,6 +6,8 @@ from pillow_heif import register_heif_opener
 
 register_heif_opener()
 
+OrientationTagID = 274
+
 piexifCodecs = [k.casefold() for k in ['TIF', 'TIFF', 'JPEG', 'JPG', 'HEIC', 'PNG']]
 
 def get_images_from_folder(folder: str, edited_word: str):
@@ -59,6 +61,15 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
             continue
         
         image = Image.open(image_path, mode="r").convert('RGB')
+        image_exif = image.getexif()
+        orientation = image_exif[OrientationTagID]
+
+        if orientation == 3:
+            image = image.rotate(180, expand=True)
+        elif orientation == 6:
+            image = image.rotate(270, expand=True)
+        elif orientation == 8:
+            image = image.rotate(90, expand=True)
 
         if max_dimension:
             image.thumbnail(max_dimension)
