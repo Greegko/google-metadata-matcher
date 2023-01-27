@@ -1,6 +1,7 @@
 import os
 import time
 from datetime import datetime
+from PIL import ExifTags
 import piexif
 from fractions import Fraction
 
@@ -106,18 +107,23 @@ def set_geo_exif(exif_dict, lat, lng, altitude):
 
     exif_dict['GPS'] = gps_ifd
 
-def set_date_exif(exif_dict, timeStamp):
-    dateTime = datetime.fromtimestamp(timeStamp).strftime("%Y:%m:%d %H:%M:%S")  # Create date object
+def set_date_exif(exif_dict, timestamp):
+    dateTime = datetime.fromtimestamp(timestamp).strftime("%Y:%m:%d %H:%M:%S")
     exif_dict['0th'][piexif.ImageIFD.DateTime] = dateTime
     exif_dict["0th"][piexif.ImageIFD.Orientation] = 1
     exif_dict['Exif'][piexif.ExifIFD.DateTimeOriginal] = dateTime
     exif_dict['Exif'][piexif.ExifIFD.DateTimeDigitized] = dateTime
 
-def set_exif(filepath, lat, lng, altitude, timeStamp):
-    exif_dict = piexif.load(filepath)
+def adjust_exif(exif_info, metadata):
+    timeStamp = int(metadata['photoTakenTime']['timestamp'])
+
+    exif_dict = piexif.load(exif_info)
+
+    lat = metadata['geoData']['latitude']
+    lng = metadata['geoData']['longitude']
+    altitude = metadata['geoData']['altitude']
 
     set_date_exif(exif_dict, timeStamp)
     set_geo_exif(exif_dict, lat, lng, altitude)
 
-    exif_bytes = piexif.dump(exif_dict)
-    piexif.insert(exif_bytes, filepath)
+    return piexif.dump(exif_dict)

@@ -50,10 +50,6 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
             errorCounter += 1
             continue
 
-        with open(metadata_path, encoding="utf8") as f: 
-            data = json.load(f)
-
-        timeStamp = int(data['photoTakenTime']['timestamp'])
 
         (_, ext) = os.path.splitext(image_path)
 
@@ -62,10 +58,10 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
             errorCounter += 1
             continue
         
-        im = Image.open(image_path, mode="r").convert('RGB')
+        image = Image.open(image_path, mode="r").convert('RGB')
 
         if max_dimension:
-            im.thumbnail(max_dimension)
+            image.thumbnail(max_dimension)
 
         new_image_path = get_output_filename(root_folder, out_folder, image_path)
 
@@ -74,16 +70,14 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-        im.save(new_image_path, quality=optimize)
-        setFileCreationTime(new_image_path, timeStamp)
+        with open(metadata_path, encoding="utf8") as f: 
+            metadata = json.load(f)
 
-        try:
-            set_exif(new_image_path, data['geoData']['latitude'], data['geoData']['longitude'], data['geoData']['altitude'], timeStamp)
-        except Exception as e: 
-            print("Inexistent EXIF data for " + image_path)
-            print(e)
-            errorCounter += 1
-            continue
+        timeStamp = int(metadata['photoTakenTime']['timestamp'])
+        new_exif = adjust_exif(image.info["exif"], metadata)
+
+        image.save(new_image_path, quality=optimize, exif=new_exif)
+        setFileCreationTime(new_image_path, timeStamp)
 
         successCounter += 1
 
