@@ -27,7 +27,7 @@ def get_images_from_folder(folder: str, edited_word: str):
     return files
 
 def get_output_filename(root_folder, out_folder, image_path):
-    image_name = os.path.basename(image_path)
+    (image_name, ext) = os.path.splitext(os.path.basename(image_path))
     new_image_name = image_name + ".jpg"
     image_path_dir = os.path.dirname(image_path)
     relative_to_new_image_folder = os.path.relpath(image_path_dir, root_folder)
