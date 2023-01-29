@@ -9,7 +9,7 @@
 
 3. Clone this repo and install dependencies
 
-       clone https://github.com/Greegko/google-metadata-matcher
+       git clone https://github.com/Greegko/google-metadata-matcher
        cd google-metadata-matcher
        pip3 install -r requirements.txt
 
