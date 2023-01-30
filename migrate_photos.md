@@ -7,9 +7,16 @@
         
         ditto -x -k *.zip ./takeout_photos
 
-3. Clone this repo and install dependencies
-
+3. Clone this repo / Download the source code
+       
+   You can clone the source code if you have git in your system
+       
        git clone https://github.com/Greegko/google-metadata-matcher
+       
+   Alternative, you can download the reposity source code, which is behind the green code button on the project.
+       
+5. install dependencies
+
        cd google-metadata-matcher
        pip3 install -r requirements.txt
 
