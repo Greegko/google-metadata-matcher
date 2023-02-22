@@ -6,6 +6,7 @@ from pillow_heif import register_heif_opener
 
 register_heif_opener()
 
+CLR = "\x1B[0K"
 OrientationTagID = 274
 
 piexifCodecs = [k.casefold() for k in ['TIF', 'TIFF', 'JPEG', 'JPG', 'HEIC', 'PNG']]
@@ -43,15 +44,16 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
 
     print("Total images found:", len(images))
 
-    for entry in progressBar(images):
+    for entry in progressBar(images, upLines = 2):
         metadata_path = entry[0]
         image_path = entry[1]
+
+        print("\n", "Current file:", image_path, CLR)
 
         if not image_path:
             print("Missing image for:", metadata_path)
             errorCounter += 1
             continue
-
 
         (_, ext) = os.path.splitext(image_path)
 
