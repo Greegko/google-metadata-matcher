@@ -7,6 +7,9 @@ from pillow_heif import register_heif_opener
 register_heif_opener()
 
 CLR = "\x1B[0K"
+CURSOR_UP_FACTORY = lambda upLines : "\x1B[" + str(upLines) + "A"
+CURSOR_DOWN_FACTORY = lambda upLines : "\x1B[" + str(upLines) + "B"
+
 OrientationTagID = 274
 
 piexifCodecs = [k.casefold() for k in ['TIF', 'TIFF', 'JPEG', 'JPG', 'HEIC', 'PNG']]
@@ -51,14 +54,15 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
         print("\n", "Current file:", image_path, CLR)
 
         if not image_path:
-            print("Missing image for:", metadata_path)
+            print(CURSOR_UP_FACTORY(2), "Missing image for:", metadata_path, CLR, CURSOR_DOWN_FACTORY(2))
+
             errorCounter += 1
             continue
 
         (_, ext) = os.path.splitext(image_path)
 
         if not ext[1:].casefold() in piexifCodecs:
-            print('Photo format is not supported:', image_path)
+            print(CURSOR_UP_FACTORY(2), 'Photo format is not supported:', image_path, CLR, CURSOR_DOWN_FACTORY(2))
             errorCounter += 1
             continue
         
@@ -98,6 +102,7 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
 
         successCounter += 1
 
+    print()
     print('Metadata merging has been finished')
     print('Success', successCounter)
     print('Failed', errorCounter)
