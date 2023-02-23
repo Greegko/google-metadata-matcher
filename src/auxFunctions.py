@@ -99,10 +99,12 @@ def set_geo_exif(exif_dict, lat, lng, altitude):
     exiv_lat = (change_to_rational(lat_deg[0]), change_to_rational(lat_deg[1]), change_to_rational(lat_deg[2]))
     exiv_lng = (change_to_rational(lng_deg[0]), change_to_rational(lng_deg[1]), change_to_rational(lng_deg[2]))
 
+    altitudeRef = 1 if altitude > 0 else 0 
+
     gps_ifd = {
         piexif.GPSIFD.GPSVersionID: (2, 0, 0, 0),
-        piexif.GPSIFD.GPSAltitudeRef: 1,
-        piexif.GPSIFD.GPSAltitude: change_to_rational(round(altitude, 2)),
+        piexif.GPSIFD.GPSAltitudeRef: altitudeRef,
+        piexif.GPSIFD.GPSAltitude: change_to_rational(round(abs(altitude), 2)),
         piexif.GPSIFD.GPSLatitudeRef: lat_deg[3],
         piexif.GPSIFD.GPSLatitude: exiv_lat,
         piexif.GPSIFD.GPSLongitudeRef: lng_deg[3],
