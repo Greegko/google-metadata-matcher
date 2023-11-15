@@ -134,6 +134,6 @@ def adjust_exif(exif_info, metadata):
 
     try:
         return piexif.dump(exif_dict)
-    finally:
+    except:
         exif_dict['Exif'][piexif.ExifIFD.SceneType] = b'1'
         return piexif.dump(exif_dict)
