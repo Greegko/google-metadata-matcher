@@ -132,4 +132,8 @@ def adjust_exif(exif_info, metadata):
     set_date_exif(exif_dict, timeStamp)
     set_geo_exif(exif_dict, lat, lng, altitude)
 
-    return piexif.dump(exif_dict)
+    try:
+        return piexif.dump(exif_dict)
+    finally:
+        exif_dict['Exif'][piexif.ExifIFD.SceneType] = b'1'
+        return piexif.dump(exif_dict)
