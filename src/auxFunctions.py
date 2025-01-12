@@ -6,17 +6,30 @@ from fractions import Fraction
 
 
 # Credit: https://stackoverflow.com/questions/3173320/text-progress-bar-in-terminal-with-block-characters
-def progressBar(iterable, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r", upLines = 0):
+def progressBar(
+    iterable,
+    prefix="",
+    suffix="",
+    decimals=1,
+    length=100,
+    fill="█",
+    printEnd="\r",
+    upLines=0,
+):
     UP = "\x1B[" + str(upLines + 1) + "A"
 
     total = len(iterable)
-    # Progress Bar Printing Function
-    def printProgressBar (iteration):
-        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-        filledLength = int(length * iteration // total)
-        bar = fill * filledLength + '-' * (length - filledLength)
 
-        print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    # Progress Bar Printing Function
+    def printProgressBar(iteration):
+        percent = ("{0:." + str(decimals) + "f}").format(
+            100 * (iteration / float(total))
+        )
+        filledLength = int(length * iteration // total)
+        bar = fill * filledLength + "-" * (length - filledLength)
+
+        print(f"\r{prefix} |{bar}| {percent}% {suffix}", end=printEnd)
+
     # Initial Call
     printProgressBar(0)
     # Update Progress Bar
@@ -26,6 +39,7 @@ def progressBar(iterable, prefix = '', suffix = '', decimals = 1, length = 100, 
         printProgressBar(i + 1)
     # Print New Line on Complete
     print()
+
 
 # Function to search media associated to the JSON
 def searchMedia(path, title, editedWord):
@@ -45,11 +59,33 @@ def searchMedia(path, title, editedWord):
         if os.path.exists(filepath):
             return filepath
 
+
 # Supress incompatible characters
 def fixTitle(title):
-    return str(title).replace("%", "").replace("<", "").replace(">", "").replace("=", "").replace(":", "").replace("?","").replace(
-        "¿", "").replace("*", "").replace("#", "").replace("&", "").replace("{", "").replace("}", "").replace("\\", "").replace(
-        "@", "").replace("!", "").replace("¿", "").replace("+", "").replace("|", "").replace("\"", "").replace("\'", "")
+    return (
+        str(title)
+        .replace("%", "")
+        .replace("<", "")
+        .replace(">", "")
+        .replace("=", "")
+        .replace(":", "")
+        .replace("?", "")
+        .replace("¿", "")
+        .replace("*", "")
+        .replace("#", "")
+        .replace("&", "")
+        .replace("{", "")
+        .replace("}", "")
+        .replace("\\", "")
+        .replace("@", "")
+        .replace("!", "")
+        .replace("¿", "")
+        .replace("+", "")
+        .replace("|", "")
+        .replace('"', "")
+        .replace("'", "")
+    )
+
 
 # Recursive function to search name if its repeated
 def checkIfSameName(title, titleFixed, matchedFiles, recursionTime):
@@ -60,10 +96,12 @@ def checkIfSameName(title, titleFixed, matchedFiles, recursionTime):
     else:
         return titleFixed
 
+
 def setFileCreationTime(filepath, timeStamp):
     date = datetime.fromtimestamp(timeStamp)
     modTime = time.mktime(date.timetuple())
     os.utime(filepath, (modTime, modTime))
+
 
 def to_deg(value, loc):
     """convert decimal coordinates into degrees, munutes and seconds tuple
@@ -92,14 +130,23 @@ def change_to_rational(number):
     f = Fraction(str(number))
     return (f.numerator, f.denominator)
 
+
 def set_geo_exif(exif_dict, lat, lng, altitude):
     lat_deg = to_deg(lat, ["S", "N"])
     lng_deg = to_deg(lng, ["W", "E"])
 
-    exiv_lat = (change_to_rational(lat_deg[0]), change_to_rational(lat_deg[1]), change_to_rational(lat_deg[2]))
-    exiv_lng = (change_to_rational(lng_deg[0]), change_to_rational(lng_deg[1]), change_to_rational(lng_deg[2]))
+    exiv_lat = (
+        change_to_rational(lat_deg[0]),
+        change_to_rational(lat_deg[1]),
+        change_to_rational(lat_deg[2]),
+    )
+    exiv_lng = (
+        change_to_rational(lng_deg[0]),
+        change_to_rational(lng_deg[1]),
+        change_to_rational(lng_deg[2]),
+    )
 
-    altitudeRef = 1 if altitude > 0 else 0 
+    altitudeRef = 1 if altitude > 0 else 0
 
     gps_ifd = {
         piexif.GPSIFD.GPSVersionID: (2, 0, 0, 0),
@@ -111,25 +158,43 @@ def set_geo_exif(exif_dict, lat, lng, altitude):
         piexif.GPSIFD.GPSLongitude: exiv_lng,
     }
 
-    exif_dict['GPS'] = gps_ifd
+    exif_dict["GPS"] = gps_ifd
+
 
 def set_date_exif(exif_dict, timestamp):
     dateTime = datetime.fromtimestamp(timestamp).strftime("%Y:%m:%d %H:%M:%S")
-    exif_dict['0th'][piexif.ImageIFD.DateTime] = dateTime
+    exif_dict["0th"][piexif.ImageIFD.DateTime] = dateTime
     exif_dict["0th"][piexif.ImageIFD.Orientation] = 1
-    exif_dict['Exif'][piexif.ExifIFD.DateTimeOriginal] = dateTime
-    exif_dict['Exif'][piexif.ExifIFD.DateTimeDigitized] = dateTime
+    exif_dict["Exif"][piexif.ExifIFD.DateTimeOriginal] = dateTime
+    exif_dict["Exif"][piexif.ExifIFD.DateTimeDigitized] = dateTime
+
 
 def adjust_exif(exif_info, metadata):
-    timeStamp = int(metadata['photoTakenTime']['timestamp'])
+    timeStamp = int(metadata["photoTakenTime"]["timestamp"])
 
-    exif_dict = piexif.load(exif_info)
+    try:
+        exif_dict = piexif.load(exif_info)
+    except Exception as e:
+        print(f"Error loading EXIF info: {e}. Starting with an empty EXIF.")
+        exif_dict = {
+            "0th": {},
+            "Exif": {},
+            "GPS": {},
+            "Interop": {},
+            "1st": {},
+            "thumbnail": None,
+        }
+
+    if 41729 in exif_dict["Exif"] and isinstance(exif_dict["Exif"][41729], int):
+        exif_dict["Exif"][41729] = str(exif_dict["Exif"][41729]).encode(
+            "utf-8"
+        )  # Convert integer to bytes.
 
     del exif_dict["thumbnail"]
 
-    lat = metadata['geoData']['latitude']
-    lng = metadata['geoData']['longitude']
-    altitude = metadata['geoData']['altitude']
+    lat = metadata["geoData"]["latitude"]
+    lng = metadata["geoData"]["longitude"]
+    altitude = metadata["geoData"]["altitude"]
 
     set_date_exif(exif_dict, timeStamp)
     set_geo_exif(exif_dict, lat, lng, altitude)
