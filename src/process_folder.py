@@ -3,16 +3,18 @@ from auxFunctions import *
 import json
 from PIL import Image
 from pillow_heif import register_heif_opener
+import shutil
 
 register_heif_opener()
 
 CLR = "\x1B[0K"
-CURSOR_UP_FACTORY = lambda upLines : "\x1B[" + str(upLines) + "A"
-CURSOR_DOWN_FACTORY = lambda upLines : "\x1B[" + str(upLines) + "B"
+CURSOR_UP_FACTORY = lambda upLines: "\x1B[" + str(upLines) + "A"
+CURSOR_DOWN_FACTORY = lambda upLines: "\x1B[" + str(upLines) + "B"
 
 OrientationTagID = 274
 
-piexifCodecs = [k.casefold() for k in ['TIF', 'TIFF', 'JPEG', 'JPG', 'HEIC', 'PNG']]
+piexifCodecs = [k.casefold() for k in ["TIF", "TIFF", "JPEG", "JPG", "HEIC", "PNG"]]
+
 
 def get_images_from_folder(folder: str, edited_word: str):
     files: list[tuple[str, str]] = []
@@ -32,6 +34,7 @@ def get_images_from_folder(folder: str, edited_word: str):
 
     return files
 
+
 def get_output_filename(root_folder, out_folder, image_path):
     (image_name, ext) = os.path.splitext(os.path.basename(image_path))
     new_image_name = image_name + ".jpg"
@@ -39,7 +42,10 @@ def get_output_filename(root_folder, out_folder, image_path):
     relative_to_new_image_folder = os.path.relpath(image_path_dir, root_folder)
     return os.path.join(out_folder, relative_to_new_image_folder, new_image_name)
 
-def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder: str, max_dimension):
+
+def processFolder(
+    root_folder: str, edited_word: str, optimize: int, out_folder: str, max_dimension
+):
     errorCounter = 0
     successCounter = 0
 
@@ -47,26 +53,69 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
 
     print("Total images found:", len(images))
 
-    for entry in progressBar(images, upLines = 2):
+    failed_folder = os.path.join(
+        out_folder, "failed"
+    )  # Create the path for the 'failed' folder
+    if not os.path.exists(failed_folder):
+        os.makedirs(failed_folder)  # Ensure the 'failed' folder exists
+
+    for entry in progressBar(images, upLines=2):
         metadata_path = entry[0]
         image_path = entry[1]
 
         print("\n", "Current file:", image_path, CLR)
 
         if not image_path:
-            print(CURSOR_UP_FACTORY(2), "Missing image for:", metadata_path, CLR, CURSOR_DOWN_FACTORY(2))
+            print(
+                CURSOR_UP_FACTORY(2),
+                "Missing image for:",
+                metadata_path,
+                CLR,
+                CURSOR_DOWN_FACTORY(2),
+            )
 
             errorCounter += 1
+            failed_metadata_path = os.path.join(
+                failed_folder, os.path.relpath(metadata_path, root_folder)
+            )
+            dir = os.path.dirname(failed_metadata_path)
+            if os.path.exists(metadata_path):
+                if not os.path.exists(dir):
+                    os.makedirs(dir)  # Create subfolder
+                shutil.copy2(
+                    metadata_path, failed_metadata_path
+                )  # Copy metadata if exists
             continue
 
         (_, ext) = os.path.splitext(image_path)
 
         if not ext[1:].casefold() in piexifCodecs:
-            print(CURSOR_UP_FACTORY(2), 'Photo format is not supported:', image_path, CLR, CURSOR_DOWN_FACTORY(2))
+            print(
+                CURSOR_UP_FACTORY(2),
+                "'Photo format is not supported:':",
+                image_path,
+                CLR,
+                CURSOR_DOWN_FACTORY(2),
+            )
+
             errorCounter += 1
+            # Copy the image and metadata to the corresponding failed sub-folder
+            failed_image_path = os.path.join(
+                failed_folder, os.path.relpath(image_path, root_folder)
+            )
+            failed_metadata_path = os.path.join(
+                failed_folder, os.path.relpath(metadata_path, root_folder)
+            )
+            dir = os.path.dirname(failed_image_path)
+            if not os.path.exists(dir):
+                os.makedirs(dir)  # Create subfolder
+
+            shutil.copy2(image_path, dir)  # Copy image to failed folder
+            if os.path.exists(metadata_path):
+                shutil.copy2(metadata_path, dir)  # Copy metadata if exists
             continue
-        
-        image = Image.open(image_path, mode="r").convert('RGB')
+
+        image = Image.open(image_path, mode="r").convert("RGB")
         image_exif = image.getexif()
         if OrientationTagID in image_exif:
             orientation = image_exif[OrientationTagID]
@@ -88,22 +137,46 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-        with open(metadata_path, encoding="utf8") as f: 
-            metadata = json.load(f)
+            # Handle missing metadata gracefully
+        if not os.path.exists(metadata_path):
+            # Copy the image and metadata to the corresponding failed sub-folder
+            failed_image_path = os.path.join(
+                failed_folder, os.path.relpath(os.path.dirname(image_path), root_folder)
+            )
+            dir = os.path.dirname(failed_image_path)
+            if not os.path.exists(dir):
+                os.makedirs(dir)  # Create subfolder
+            shutil.copy2(image_path, failed_image_path)
+            print(f"No metadata for {image_path}.")
+            errorCounter += 1
+            continue
 
-        timeStamp = int(metadata['photoTakenTime']['timestamp'])
-        if "exif" in image.info:
-            new_exif = adjust_exif(image.info["exif"], metadata)
-            image.save(new_image_path, quality=optimize, exif=new_exif)
-        else:
-            image.save(new_image_path, quality=optimize)
+        try:
+            with open(metadata_path, encoding="utf8") as f:
+                metadata = json.load(f)
+
+            timeStamp = int(metadata["photoTakenTime"]["timestamp"])
+            # If the metadata exists, use it to adjust EXIF and save
+            if "exif" in image.info:
+                new_exif = adjust_exif(image.info["exif"], metadata)
+                image.save(new_image_path, quality=optimize, exif=new_exif)
+            else:
+                image.save(new_image_path, quality=optimize)
+        except Exception as e:
+            print(f"Error loading metadata for {image_path}: {e}. Moved to failed.")
+            # If there's an issue with the metadata, copy to the failed folder
+            failed_image_path = os.path.join(
+                failed_folder, os.path.relpath(os.path.dirname(image_path), root_folder)
+            )
+            shutil.copy2(image_path, failed_image_path)
+            errorCounter += 1
+            continue
 
         setFileCreationTime(new_image_path, timeStamp)
 
         successCounter += 1
 
     print()
-    print('Metadata merging has been finished')
-    print('Success', successCounter)
-    print('Failed', errorCounter)
-
+    print("Metadata merging has been finished")
+    print("Success", successCounter)
+    print("Failed", errorCounter)
