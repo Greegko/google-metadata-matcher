@@ -93,8 +93,11 @@ def processFolder(root_folder: str, edited_word: str, optimize: int, out_folder:
 
         timeStamp = int(metadata['photoTakenTime']['timestamp'])
         if "exif" in image.info:
-            new_exif = adjust_exif(image.info["exif"], metadata)
-            image.save(new_image_path, quality=optimize, exif=new_exif)
+            try:
+                new_exif = adjust_exif(image.info["exif"], metadata)
+                image.save(new_image_path, quality=optimize, exif=new_exif)
+            except:
+                image.save(new_image_path, quality=optimize)
         else:
             image.save(new_image_path, quality=optimize)
 
